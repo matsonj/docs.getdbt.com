@@ -41,7 +41,12 @@ By contrast, behavior change migrations happen slowly, over the course of months
 
 These flags _must_ be set in the `flags` dictionary in `dbt_project.yml`. They configure behaviors closely tied to project code, which means they should be defined in version control and modified through pull or merge requests, with the same testing and peer review.
 
-The following example displays the current flags and their current default values in the latest dbt Cloud and dbt Core versions. To opt out of a specific behavior change, set the values of the flag to `False` in `dbt_project.yml`. You'll continue to see warnings for legacy behaviors that you have opted out of explicitly until you either resolve them (switch the flag to `True`) or choose to silence the warnings using the `warn_error_options.silence` flag.
+The following example displays the current flags and their current default values in the latest dbt Cloud and dbt Core versions. To opt out of a specific behavior change, set the values of the flag to `False` in `dbt_project.yml`. You will continue to see warnings for legacy behaviors you’ve opted out of, until you either:
+
+- Resolve the issue (by switching the flag to `True`)
+- Silence the warnings using the `warn_error_options.silence` flag
+
+Here's an example of the available behavior change flags with their default values:
 
 <File name='dbt_project.yml'>
 
@@ -50,6 +55,7 @@ flags:
   require_explicit_package_overrides_for_builtin_materializations: False
   require_model_names_without_spaces: False
   source_freshness_run_project_hooks: False
+  restrict_direct_pg_catalog_access: False
 ```
 
 </File>
@@ -58,13 +64,31 @@ When we use dbt Cloud in the following table, we're referring to accounts that h
 
 | Flag                                                            | dbt Cloud: Intro | dbt Cloud: Maturity | dbt Core: Intro | dbt Core: Maturity | 
 |-----------------------------------------------------------------|------------------|---------------------|-----------------|--------------------|
-| require_explicit_package_overrides_for_builtin_materializations | 2024.04.141      | 2024.06.192         | 1.6.14, 1.7.14  | 1.8.0             |
-| require_resource_names_without_spaces                           | 2024.05.146      | TBD*                | 1.8.0           | 1.9.0             |
-| source_freshness_run_project_hooks                              | 2024.03.61       | TBD*                | 1.8.0           | 1.9.0             |
+| require_explicit_package_overrides_for_builtin_materializations | 2024.04          | 2024.06             | 1.6.14, 1.7.14  | 1.8.0             |
+| require_resource_names_without_spaces                           | 2024.05          | TBD*                | 1.8.0           | 1.9.0             |
+| source_freshness_run_project_hooks                              | 2024.03          | TBD*                | 1.8.0           | 1.9.0             |
+| [Redshift] [restrict_direct_pg_catalog_access](/reference/global-configs/redshift-changes#the-restrict_direct_pg_catalog_access-flag)    | 2024.09          | TBD*                | dbt-redshift v1.9.0           | 1.9.0             |
+| skip_nodes_if_on_run_start_fails                                | 2024.10          | TBD*                | 1.9.0           | TBD*              |
+| state_modified_compare_more_unrendered_values                   | 2024.10          | TBD*                | 1.9.0           | TBD*              |
 
 When the dbt Cloud Maturity is "TBD," it means we have not yet determined the exact date when these flags' default values will change. Affected users will see deprecation warnings in the meantime, and they will receive emails providing advance warning ahead of the maturity date. In the meantime, if you are seeing a deprecation warning, you can either:
 - Migrate your project to support the new behavior, and then set the flag to `True` to stop seeing the warnings.
 - Set the flag to `False`. You will continue to see warnings, and you will retain the legacy behavior even after the maturity date (when the default value changes).
+
+### Failures in on-run-start hooks
+
+The flag is `False` by default.
+
+Set the `skip_nodes_if_on_run_start_fails` flag to `True` to skip all selected resources from running if there is a failure on an `on-run-start` hook. 
+
+### Source definitions for state:modified
+
+The flag is `False` by default.
+
+Set `state_modified_compare_more_unrendered_values` to `True` to reduce false positives during `state:modified` checks (especially when configs differ by target environment like `prod` vs. `dev`).
+
+Setting the flag to `True` changes the `state:modified` comparison from using rendered values to unrendered values instead. It accomplishes this by persisting `unrendered_config` during model parsing and `unrendered_database` and `unrendered_schema` configs during source parsing.
+
 
 ###  Package override for built-in materialization 
 
